@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const cheerio = require("cheerio");
 const {minify} = require("terser");
 
+const {loadConfig} = require("../../../utils/loadConfig.js");
 const {loadPluginsAsStringWithCache} = require("./plugins-manager");
 const {injectHook} = require("./inject-hook");
 
@@ -39,7 +40,7 @@ const disableCache = false;
     console.log(`缓存文件已加载完毕，目前有缓存 ${injectSuccessJsFileCache.size}个`);
 })();
 
-function process(requestDetail, responseDetail) {
+async function process(requestDetail, responseDetail) {
 
     if (isHtmlResponse(responseDetail)) {
         try {
@@ -50,14 +51,52 @@ function process(requestDetail, responseDetail) {
         return;
     }
 
-    if (isJavaScriptResponse(responseDetail)) {
-        try {
-            processJavaScriptResponse(requestDetail, responseDetail);
-        } catch (e) {
-            console.error(e);
+    if (!isJavaScriptResponse(responseDetail)) return;
+
+    // 支持选择性对特定URL/符合正则的URL进行AST Hook
+    let isSuccessMatch = false;
+    let hookTargetType = "";
+    let hookTargetValue = "";
+    const config = await loadConfig();
+    for (const current_hook_target of config.hook_target) {
+        if (current_hook_target.type === "url" && current_hook_target.value === requestDetail.url) {
+            isSuccessMatch = true
+            hookTargetType = current_hook_target.type;
+            hookTargetValue = current_hook_target.value;
+        } else if (current_hook_target.type === "regex" && matchByRegExp(current_hook_target.value, requestDetail.url)) {
+            isSuccessMatch = true
+            hookTargetType = current_hook_target.type;
+            hookTargetValue = current_hook_target.value;
         }
-        return;
+        if (isSuccessMatch) break
     }
+
+    if (!isSuccessMatch) return
+
+    console.log(`[+] 开始对类型为: ${hookTargetType} , 值为: ${hookTargetValue} 的数据开始Hook`);
+
+    try {
+        await processJavaScriptResponse(requestDetail, responseDetail);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function isRegExpCorrect(inputRegex) {
+    try {
+        new RegExp(inputRegex);
+        return true;
+    } catch (error) {
+        console.error("[-] 存在非法正则表达式! 请检查config.json中的正则: ", inputRegex);
+        return false
+    }
+}
+
+
+function matchByRegExp(inputRegex, testString) {
+    if (!isRegExpCorrect(inputRegex)) return false;
+    let realRegExp = new RegExp(inputRegex);
+    return realRegExp.test(testString);
 }
 
 // 判断是否是HTML类型的响应内容
@@ -150,7 +189,7 @@ function isJavaScriptResponse(responseDetail) {
 }
 
 //
-function processJavaScriptResponse(requestDetail, responseDetail) {
+async function processJavaScriptResponse(requestDetail, responseDetail) {
     // 这样粗暴地搞可能会有问题，比如淘宝那种贼恶心的模块加载方式
     // const url = requestDetail.url.split("?")[0];
     const url = requestDetail.url;
@@ -161,11 +200,11 @@ function processJavaScriptResponse(requestDetail, responseDetail) {
     }
 
     if (disableCache || body.length <= 2000) {
-        processRealtime(responseDetail, url, body);
+        await processRealtime(responseDetail, url, body);
     } else if (injectSuccessJsFileCache.has(url)) {
         processFromCache(responseDetail, url, body);
     } else {
-        processRealtime(responseDetail, url, body);
+        await processRealtime(responseDetail, url, body);
     }
 }
 
@@ -179,7 +218,7 @@ function processFromCache(responseDetail, url, body) {
     responseDetail.response.body = loadPluginsAsStringWithCache() + fileContent;
 }
 
-function compressCode(newJsCode, cacheFilePath,meta) {
+function compressCode(newJsCode, cacheFilePath, meta) {
     return minify(newJsCode, {
         compress: false,
         mangle: false
@@ -195,7 +234,7 @@ function compressCode(newJsCode, cacheFilePath,meta) {
         });
 }
 
-function processRealtime(responseDetail, url, body) {
+async function processRealtime(responseDetail, url, body) {
     const newJsCode = injectHook(body);
     const md5 = crypto.createHash("md5");
     const cacheFilePath = injectSuccessJsFileCacheDirectory + "/" + md5.update(url).digest("hex") + ".js";
@@ -205,8 +244,13 @@ function processRealtime(responseDetail, url, body) {
         cacheTime: new Date().getTime()
     };
 
-    // 将 newJsCode 进行压缩,防止代码格式化检测 todo 应该设置为一个选项,为True时开启压缩
-    compressCode(newJsCode, cacheFilePath,meta).then(result => responseDetail.response.body = loadPluginsAsStringWithCache() + result);
+    // 将 newJsCode 进行压缩,防止代码格式化检测
+    const config = await loadConfig();
+    if (config.isAutoCompress) { // 为True时开启压缩
+        compressCode(newJsCode, cacheFilePath, meta).then(result => responseDetail.response.body = loadPluginsAsStringWithCache() + result);
+    } else {
+        responseDetail.response.body = loadPluginsAsStringWithCache() + newJsCode
+    }
     injectSuccessJsFileCache.set(url, meta);
 }
 

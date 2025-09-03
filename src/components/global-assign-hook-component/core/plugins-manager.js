@@ -39,11 +39,8 @@ function loadPluginsAsString() {
         "   window.cc11001100_hook_done = true;\n\n";
 
     const hookJsPath = path.join(__dirname, '../../src/components/global-assign-hook-component/core/hook.js');
-    console.log("hookJsPath: " + hookJsPath);
 
-    // 检查文件是否存在
-    if (!fs.existsSync(hookJsPath)) {
-        // 如果文件不存在，输出错误信息（包含完整路径）并强制退出
+    if (!fs.existsSync(hookJsPath)) { // 如果文件不存在，输出错误信息（包含完整路径）并强制退出
         console.error(`错误：文件路径不存在 "${hookJsPath}"`);
         process.exit(1); // 使用非零退出码表示错误退出
     }
