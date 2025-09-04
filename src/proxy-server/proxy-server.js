@@ -10,13 +10,13 @@ const {loadConfig} = require("../utils/loadConfig.js");
             rule: require("./rules"),
             webInterface: {
                 enable: true,
-                webPort: config.webPort
+                webPort: config.web_port
             },
             dangerouslyIgnoreUnauthorized:true,
             throttle: 10000,
             forceProxyHttps: true,
-            wsIntercept: config.isOpenWebsocket,
-            silent: config.isCloseDetailedLog
+            wsIntercept: config.is_open_websocket,
+            silent: config.is_close_detailedLog
         };
 
         const proxyServer = new AnyProxy.ProxyServer(options);

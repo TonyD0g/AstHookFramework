@@ -7,16 +7,21 @@ const {minify} = require("terser");
 const {loadConfig} = require("../../../utils/loadConfig.js");
 const {loadPluginsAsStringWithCache} = require("./plugins-manager");
 const {injectHook} = require("./inject-hook");
+const AnyProxy = require("anyproxy");
 
 // 注入Hook成功的文件暂存到哪个目录下，因为注入实在是太慢了，落盘以应对频繁重启
 const injectSuccessJsFileCacheDirectory = "./js-file-cache";
 const injectSuccessJsFileCacheMetaFile = `${injectSuccessJsFileCacheDirectory}/meta.jsonl`
 
-// {
-//   "filepath": "",
-//   "url": "",
-//    "cacheTime": ""
-// }
+let config;
+(async function loadConfigAndInitAgent() {
+    try {
+        config = await loadConfig();
+    } catch (error) {
+        console.error('Failed to load config:', error);
+    }
+})();
+
 const injectSuccessJsFileCache = new Map();
 
 const disableCache = false;
@@ -40,7 +45,20 @@ const disableCache = false;
     console.log(`缓存文件已加载完毕，目前有缓存 ${injectSuccessJsFileCache.size}个`);
 })();
 
-async function process(requestDetail, responseDetail) {
+function matchDomain(matchDomainExp, url) {
+    try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.hostname && /[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(parsedUrl.hostname) && matchDomainExp === parsedUrl.hostname) {
+            return true;
+        }
+    } catch (e) {
+        return false;
+    }
+    return false;
+}
+
+// 注意! : 此方法不能使用异步,否则将无法正常hook !!!
+function process(requestDetail, responseDetail) {
 
     if (isHtmlResponse(responseDetail)) {
         try {
@@ -53,30 +71,33 @@ async function process(requestDetail, responseDetail) {
 
     if (!isJavaScriptResponse(responseDetail)) return;
 
-    // 支持选择性对特定URL/符合正则的URL进行AST Hook
-    let isSuccessMatch = false;
-    let hookTargetType = "";
-    let hookTargetValue = "";
-    const config = await loadConfig();
-    for (const current_hook_target of config.hook_target) {
-        if (current_hook_target.type === "url" && current_hook_target.value === requestDetail.url) {
-            isSuccessMatch = true
-            hookTargetType = current_hook_target.type;
-            hookTargetValue = current_hook_target.value;
-        } else if (current_hook_target.type === "regex" && matchByRegExp(current_hook_target.value, requestDetail.url)) {
-            isSuccessMatch = true
-            hookTargetType = current_hook_target.type;
-            hookTargetValue = current_hook_target.value;
+    if (config.is_open_hook_target) {
+        // 支持选择性对特定URL/符合正则的URL进行AST Hook
+        let isSuccessMatch = false;
+        let hookTargetType = "";
+        let hookTargetValue = "";
+        for (const current_hook_target of config.hook_target) {
+            if (current_hook_target.type === "url" && current_hook_target.value === requestDetail.url) {
+                isSuccessMatch = true
+            } else if (current_hook_target.type === "regex" && matchByRegExp(current_hook_target.value, requestDetail.url)) {
+                isSuccessMatch = true
+            } else if (current_hook_target.type === "domain" && matchDomain(current_hook_target.value, requestDetail.url)) {
+                isSuccessMatch = true
+            }
+            if (isSuccessMatch) {
+                hookTargetType = current_hook_target.type;
+                hookTargetValue = current_hook_target.value;
+                break
+            }
         }
-        if (isSuccessMatch) break
+
+        if (!isSuccessMatch) return
+
+        console.log(`[+] 开始对类型为: ${hookTargetType} , 值为: ${hookTargetValue} 的数据开始Hook`);
     }
 
-    if (!isSuccessMatch) return
-
-    console.log(`[+] 开始对类型为: ${hookTargetType} , 值为: ${hookTargetValue} 的数据开始Hook`);
-
     try {
-        await processJavaScriptResponse(requestDetail, responseDetail);
+        processJavaScriptResponse(requestDetail, responseDetail);
     } catch (e) {
         console.error(e);
     }
@@ -188,8 +209,7 @@ function isJavaScriptResponse(responseDetail) {
     return false;
 }
 
-//
-async function processJavaScriptResponse(requestDetail, responseDetail) {
+function processJavaScriptResponse(requestDetail, responseDetail) {
     // 这样粗暴地搞可能会有问题，比如淘宝那种贼恶心的模块加载方式
     // const url = requestDetail.url.split("?")[0];
     const url = requestDetail.url;
@@ -200,11 +220,11 @@ async function processJavaScriptResponse(requestDetail, responseDetail) {
     }
 
     if (disableCache || body.length <= 2000) {
-        await processRealtime(responseDetail, url, body);
+        processRealtime(responseDetail, url, body);
     } else if (injectSuccessJsFileCache.has(url)) {
         processFromCache(responseDetail, url, body);
     } else {
-        await processRealtime(responseDetail, url, body);
+        processRealtime(responseDetail, url, body);
     }
 }
 
@@ -234,7 +254,7 @@ function compressCode(newJsCode, cacheFilePath, meta) {
         });
 }
 
-async function processRealtime(responseDetail, url, body) {
+function processRealtime(responseDetail, url, body) {
     const newJsCode = injectHook(body);
     const md5 = crypto.createHash("md5");
     const cacheFilePath = injectSuccessJsFileCacheDirectory + "/" + md5.update(url).digest("hex") + ".js";
@@ -245,10 +265,13 @@ async function processRealtime(responseDetail, url, body) {
     };
 
     // 将 newJsCode 进行压缩,防止代码格式化检测
-    const config = await loadConfig();
-    if (config.isAutoCompress) { // 为True时开启压缩
+    if (config.is_auto_compress) { // 为True时开启压缩
         compressCode(newJsCode, cacheFilePath, meta).then(result => responseDetail.response.body = loadPluginsAsStringWithCache() + result);
     } else {
+        if (!disableCache) {
+            fs.writeFileSync(cacheFilePath, newJsCode);
+            fs.appendFileSync(injectSuccessJsFileCacheMetaFile, JSON.stringify(meta) + "\n");
+        }
         responseDetail.response.body = loadPluginsAsStringWithCache() + newJsCode
     }
     injectSuccessJsFileCache.set(url, meta);
