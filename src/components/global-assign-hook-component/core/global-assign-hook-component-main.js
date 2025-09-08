@@ -6,8 +6,9 @@ const {minify} = require("terser");
 
 const {loadConfig} = require("../../../utils/loadConfig.js");
 const {loadPluginsAsStringWithCache} = require("./plugins-manager");
-const {injectHook} = require("./inject-hook");
-const AnyProxy = require("anyproxy");
+const {positioningEncryptionHook} = require("./inject-hook");
+// const AnyProxy = require("anyproxy");
+const {registerFunctionsToWindow} = require("../plugins/register-function-in-window");
 
 // 注入Hook成功的文件暂存到哪个目录下，因为注入实在是太慢了，落盘以应对频繁重启
 const injectSuccessJsFileCacheDirectory = "./js-file-cache";
@@ -48,9 +49,7 @@ const disableCache = false;
 function matchDomain(matchDomainExp, url) {
     try {
         const parsedUrl = new URL(url);
-        if (parsedUrl.hostname && /[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(parsedUrl.hostname) && matchDomainExp === parsedUrl.hostname) {
-            return true;
-        }
+        if (parsedUrl.hostname && /[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(parsedUrl.hostname) && matchDomainExp === parsedUrl.hostname) return true;
     } catch (e) {
         return false;
     }
@@ -93,6 +92,7 @@ function process(requestDetail, responseDetail) {
 
         if (!isSuccessMatch) return
 
+        const date = new Date();
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以加1
         const day = String(date.getDate()).padStart(2, '0');
@@ -147,7 +147,6 @@ function processHtmlResponse(requestDetail, responseDetail) {
     // 上面那个库有bug，替换为这个库： https://github.com/cheeriojs/cheerio/
 
     // 对所有的内嵌JavaScript内容注入Hook
-    const url = requestDetail.url;
     const body = responseDetail.response.body.toString();
 
     if (!body.length) {
@@ -156,32 +155,26 @@ function processHtmlResponse(requestDetail, responseDetail) {
     //修复编码问题
     const $ = cheerio.load(body, {decodeEntities: false});
     const scriptArray = $("script", {encodeEntities: false});
-    if (!scriptArray?.length) {
-        return;
-    }
+
+    if (!scriptArray?.length) return;
+
     let alreadyInjectHookContext = false;
     for (let script of scriptArray) {
-
         // 对于是src引用的外部，其标签内容都会被忽略
-        if (script.attribs.src) {
-            continue;
-        }
+        if (script.attribs.src) continue;
+
 
         // 空script
-        if (!script.children.length) {
-            continue;
-        }
+        if (!script.children.length) continue;
+
 
         // script的内容
         let jsCode = "";
-        for (let child of script.children) {
-            jsCode += child.data;
-        }
-        if (!jsCode) {
-            return;
-        }
+        for (let child of script.children) jsCode += child.data;
 
-        let newJsCode = injectHook(jsCode);
+        if (!jsCode) return;
+
+        let newJsCode = positioningEncryptionHook(jsCode);
         // 随着script替换时注入，不创建新的script标签
         if (!alreadyInjectHookContext) {
             newJsCode = loadPluginsAsStringWithCache() + newJsCode;
@@ -261,7 +254,17 @@ function compressCode(newJsCode, cacheFilePath, meta) {
 }
 
 function processRealtime(responseDetail, url, body) {
-    const newJsCode = injectHook(body);
+    let newJsCode;
+    if (config.current_use_plugin === "positioningEncryptionHook") {
+        newJsCode = positioningEncryptionHook(body);
+    } else if (config.current_use_plugin === "registerFunctionsToWindow") {
+        newJsCode = registerFunctionsToWindow(body);
+    } else {
+        console.log(`[-] 插件名 ${config.current_use_plugin} 不存在,将默认使用 positioningEncryptionHook 插件`);
+        newJsCode = positioningEncryptionHook(body);
+    }
+
+
     const md5 = crypto.createHash("md5");
     const cacheFilePath = injectSuccessJsFileCacheDirectory + "/" + md5.update(url).digest("hex") + ".js";
     const meta = {

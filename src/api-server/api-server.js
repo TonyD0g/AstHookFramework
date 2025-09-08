@@ -1,8 +1,20 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const {injectHook} = require("../components/global-assign-hook-component/core/inject-hook");
+const {positioningEncryptionHook} = require("../components/global-assign-hook-component/core/inject-hook");
+const {registerFunctionsToWindow} = require("../components/global-assign-hook-component/plugins/register-function-in-window");
+const {loadConfig} = require("../utils/loadConfig");
 
 const app = express();
+
+let config;
+(async function loadConfigAndInitAgent() {
+    try {
+        config = await loadConfig();
+    } catch (error) {
+        console.error('Failed to load config:', error);
+    }
+})();
+
 
 app.use(bodyParser.raw({
     verify: function (req, res, buf, encoding) {
@@ -18,10 +30,16 @@ app.use(bodyParser.raw({
 }));
 // 将传过来的js代码注入hook
 app.post("/hook-js-code", function (request, response) {
-    const jsCode = decodeURIComponent(request.body.toString());
-    let newJsCode = jsCode;
+    let newJsCode = decodeURIComponent(request.body.toString());
     try {
-        newJsCode = injectHook(jsCode);
+        if (config.current_use_plugin === "positioningEncryptionHook") {
+            newJsCode = positioningEncryptionHook(body);
+        } else if (config.current_use_plugin === "registerFunctionsToWindow") {
+            newJsCode = registerFunctionsToWindow(body);
+        } else {
+            console.log(`[-] 插件名 ${config.current_use_plugin} 不存在,将默认使用 positioningEncryptionHook 插件`);
+            newJsCode = positioningEncryptionHook(body);
+        }
     } catch (e) {
         console.error(e);
     }

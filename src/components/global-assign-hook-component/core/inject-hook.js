@@ -4,7 +4,7 @@ const generator = require("@babel/generator");
 
 const hookFunctionName = "cc11001100_hook";
 
-function injectHook(jsCode) {
+function positioningEncryptionHook(jsCode) {
     const ast = babel.parse(jsCode);
     babel.traverse(ast, {
 
@@ -131,4 +131,4 @@ function injectHook(jsCode) {
     return generator.default(ast).code;
 }
 
-module.exports.injectHook = injectHook;
+module.exports.positioningEncryptionHook = positioningEncryptionHook;
