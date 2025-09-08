@@ -93,7 +93,13 @@ function process(requestDetail, responseDetail) {
 
         if (!isSuccessMatch) return
 
-        console.log(`[+] 开始对类型为: ${hookTargetType} , 值为: ${hookTargetValue} 的数据开始Hook`);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，所以加1
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        console.log(`[+] ${year}-${month}-${day}-${hours}:${minutes} 开始对类型为: ${hookTargetType} , 值为: ${hookTargetValue} 的数据开始Hook`);
     }
 
     try {
