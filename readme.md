@@ -22,7 +22,7 @@
 
    ```json
    {
-     "port": 10086,  // 
+     "port": 10086,  // 需要Hook的数据包端口
      "web_port": 8002, // web服务的端口
      "is_close_detailedLog": true, // 是否关闭详细日志
      "is_open_websocket": false, // 是否开启 websocket
@@ -50,7 +50,9 @@
    node proxy-server.js
    ```
 
+4. 如果使用默认的 config.json 配置，那么当浏览器的数据包通过 **10086** 端口时，程序会获取到该端口上的所有数据包，并自动Hook
 
+   
 
 ## 特性
 
@@ -60,7 +62,7 @@
 
 - 支持选择性开启JS压缩  [√]
 
-- 支持选择性对**特定URL/符合正则/domain**的URL进行AST Hook，从而加快页面加载速度 [√]
+- 支持选择性对 **特定URL/符合正则/domain** 的URL进行AST Hook，从而加快页面加载速度 [√]
 
 - 加载并读取Config文件，从而达到控制程序流程的目的  [√]
 
