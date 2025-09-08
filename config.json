@@ -4,13 +4,12 @@
   "is_close_detailedLog": true,
   "is_open_websocket": false,
   "is_auto_compress": true,
-  "upstream_proxyUrl": "http://127.0.0.1:8080",
   "is_open_hook_target": true,
   "hook_target_supported_types": "url,regex,domain",
   "hook_target": [
     {
       "type": "domain",
-      "value": "hg.imou.com"
+      "value": ""
     }
   ]
 }
