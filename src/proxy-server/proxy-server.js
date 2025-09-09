@@ -9,10 +9,10 @@ const {loadConfig} = require("../utils/loadConfig.js");
             port: config.port,
             rule: require("./rules"),
             webInterface: {
-                enable: true,
+                enable: config.is_open_web_server,
                 webPort: config.web_port
             },
-            dangerouslyIgnoreUnauthorized:true,
+            dangerouslyIgnoreUnauthorized: true,
             throttle: 10000,
             forceProxyHttps: true,
             wsIntercept: config.is_open_websocket,
@@ -22,7 +22,9 @@ const {loadConfig} = require("../utils/loadConfig.js");
         const proxyServer = new AnyProxy.ProxyServer(options);
 
         proxyServer.on("ready", () => {
-            console.log("AnyProxy 代理服务器已就绪");
+            console.log(`AnyProxy 代理服务器已开启在 ${config.port} 端口上,请给浏览器代理插件设置该端口即可`);
+
+            if (config.is_open_web_server) console.log(`AnyProxy 代理服务器的web页面在 http://127.0.0.1:${config.web_port} 上`);
         });
 
         proxyServer.on("error", (e) => {

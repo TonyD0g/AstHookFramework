@@ -11,7 +11,7 @@
 ## 目前支持的插件
 
 - 快速定位到**加密参数**的**加密位置**
-
+- 注册所有方法到window(**有缺陷,可能会漏方法**),从而方便jsRPC调用
 
 
 ## 使用
@@ -24,15 +24,21 @@
    {
      "port": 10086,  // 从指定的端口获取数据包来源
      "web_port": 8002, // web服务的端口
+     
+     "is_open_proxy": false, // 是否开启代理,如果为true则表示通过`proxy_port`进行发送数据
+     "proxy_url": "http://127.0.0.1:10809", // 代理软件的完整url
+     
      "is_close_detailedLog": true, // 是否关闭详细日志
      "is_open_websocket": false, // 是否开启 websocket
      "is_auto_compress": true, // 是否自动压缩hook后的js代码
      "is_open_hook_target": true, // 是否开启`基于指定逻辑的hook`
+     
      "supported_plugin_list": [ // 支持的插件
        "positioningEncryptionHook", // 定位加密
        "registerFunctionsToWindow" // 注册所有方法到window
      ],
      "current_use_plugin": "positioningEncryptionHook", // 当前正在使用的插件
+     
      "hook_target_supported_types": [
        "url",
        "regex",
@@ -75,12 +81,13 @@
 
 - 加载并读取Config文件，从而达到控制程序流程的目的  [√]
 
+- 使用anyproxy将请求发送到另一个http代理，且可通过Config文件进行配置   [√]
+
   
 
 ## TODO
 
 - 支持用户自定义加载hook插件 [todo]
-- 吸收其他魔改项目的精髓  [todo]
 
 
 
@@ -90,3 +97,4 @@
 - 魔改一：https://github.com/lgnorant-lu/AST-Hook-for-JS-RE-Personnal-Use
 - 魔改二：https://github.com/afeichuanqi/ast-hook-new
 
+- 设置上游代理：https://github.com/alibaba/anyproxy/issues/314
