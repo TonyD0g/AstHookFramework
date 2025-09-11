@@ -27,6 +27,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Node.js.api-server.js.executor&quot;: &quot;Run&quot;,
     &quot;Node.js.proxy-server.js.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/macmini/Coding/Github/AstHookFramework&quot;,

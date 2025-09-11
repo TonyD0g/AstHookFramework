@@ -49,7 +49,7 @@ const disableCache = false;
 function matchDomain(matchDomainExp, url) {
     try {
         const parsedUrl = new URL(url);
-        if (parsedUrl.hostname && /[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(parsedUrl.hostname) && matchDomainExp === parsedUrl.hostname) return true;
+        if (parsedUrl.hostname && matchDomainExp === parsedUrl.hostname) return true;
     } catch (e) {
         return false;
     }
