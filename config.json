@@ -17,7 +17,7 @@
     "positioningEncryptionHook",
     "registerFunctionsToWindow"
   ],
-  "current_use_plugin": "registerFunctionsToWindow",
+  "current_use_plugin": "positioningEncryptionHook",
 
   "hook_target_supported_types": [
     "url",
@@ -27,7 +27,7 @@
   "hook_target": [
     {
       "type": "domain",
-      "value": "hg.imou.com"
+      "value": "120.232.37.235"
     }
   ]
 }

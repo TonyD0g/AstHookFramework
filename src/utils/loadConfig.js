@@ -1,6 +1,7 @@
-import { promises as fs } from 'fs';
+// import { promises as fs } from 'fs';
+const fs = require('fs').promises;
 
-export async function loadConfig() {
+async function loadConfig() {
     try {
         const data = await fs.readFile('../../config.json', 'utf8');
         return JSON.parse(data);
@@ -9,3 +10,7 @@ export async function loadConfig() {
         throw err;
     }
 }
+
+module.exports = {
+    loadConfig
+};
