@@ -28,7 +28,7 @@
    ```json
    {
      "port": 10086,  // 从指定的端口获取数据包来源
-     "web_port": 8002, // web服务的端口
+     "web_port": 8002, // anyproxy web服务的端口
      
      "is_open_proxy": false, // 是否开启代理,如果为true则表示通过`proxy_port`进行发送数据
      "proxy_url": "http://127.0.0.1:10809", // 代理软件的完整url
