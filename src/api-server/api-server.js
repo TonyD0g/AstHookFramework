@@ -2,7 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const {positioningEncryptionHook} = require("../components/global-assign-hook-component/core/inject-hook");
 const {registerFunctionsToWindow} = require("../components/global-assign-hook-component/plugins/register-function-in-window");
-const {loadConfig} = require("../utils/loadConfig");
+const {promises: fs} = require("fs");
+
 
 const app = express();
 
@@ -15,6 +16,15 @@ let config;
     }
 })();
 
+async function loadConfig() {
+    try {
+        const data = await fs.readFile('../../config.json', 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error('读取配置文件失败:', err);
+        throw err;
+    }
+}
 
 app.use(bodyParser.raw({
     verify: function (req, res, buf, encoding) {
