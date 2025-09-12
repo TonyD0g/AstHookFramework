@@ -76,17 +76,57 @@
 
 ## 目前支持的插件
 
-- 快速定位到**加密参数**的**加密位置**
+### 快速定位到**加密参数**的**加密位置**
 
-  - 将请求包中的**加密参数的值** 复制粘贴到控制台中：
+##### **简单说：**
 
-    ```md
-    hook.search("加密参数的值")
-    ```
+将请求包中的**加密参数的值** 复制粘贴到控制台中：
 
-    直接回车即可定位到加密位置。
+```md
+hook.search("加密参数的值")
+```
 
-- 注册所有方法到window(**有缺陷,可能会漏方法**),从而方便jsRPC调用
+直接回车即可定位到加密位置。
+
+
+
+##### **详细说：**
+
+把anyproxy和api-server启动，浏览器挂上代理，打开这个页面：
+
+[http://match.yuanrenxue.com/match/1](http://match.yuanrenxue.com/match/1)
+
+打开开发者工具，然后切换到network，然后单击页面上的第二页：
+
+![](images/README_images/a0806b65.png)
+
+发现是有一个加密的参数叫m的，然后复制这个m的值，记得完整复制：
+
+![](/Users/macmini/Coding/Github/AstHookFramework/images/README_images/ca281c6e.png)
+
+还要确保复制到的是URL解码后的，然后切换到console，尝试搜索：
+
+![](/Users/macmini/Coding/Github/AstHookFramework/images/README_images/73539b0b.png)
+
+搜索结果出现了多条，除了第一个其它都是在jquery.min.js中出现的，
+所以果断单击第一个的代码地址跟进去：
+
+![](/Users/macmini/Coding/Github/AstHookFramework/images/README_images/dcea3602.png)
+
+发现m是多个参数拼接而成的，继续往前看，m是由一个方法得到的，
+已经定位到了位置，接下来跟进去扣方法就行了。
+
+这里会发现出现了很多名为`cc11001100_hook`的函数，可以把这个函数理解为
+`它会直接返回第二个参数的值`，对整体逻辑没有影响，分析时忽略它即可。
+
+
+
+#### 注册所有方法到window
+
+- (**有缺陷,可能会漏方法**)
+- 方便jsRPC调用
+
+
 
 
 
