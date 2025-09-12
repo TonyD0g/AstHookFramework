@@ -1,4 +1,3 @@
-// import { promises as fs } from 'fs';
 const fs = require('fs').promises;
 
 async function loadConfig() {

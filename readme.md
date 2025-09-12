@@ -27,7 +27,7 @@
 
    ```json
    {
-     "port": 10086,  // 从指定的端口获取数据包来源
+     "port": 10086,  // 浏览器代理插件端口 (foxyproxy、SwitchyOmega等)
      "web_port": 8002, // anyproxy web服务的端口
      
      "is_open_proxy": false, // 是否开启代理,如果为true则表示通过`proxy_port`进行发送数据
@@ -36,7 +36,6 @@
      "is_close_detailedLog": true, // 是否关闭详细日志
      "is_open_websocket": false, // 是否开启 websocket
      "is_auto_compress": true, // 是否自动压缩hook后的js代码
-     "is_open_hook_target": true, // 是否开启`基于指定逻辑的hook`
      
      "supported_plugin_list": [ // 支持的插件
        "positioningEncryptionHook", // 定位加密
@@ -44,6 +43,7 @@
      ],
      "current_use_plugin": "positioningEncryptionHook", // 当前正在使用的插件
      
+     "is_open_hook_target": true, // 是否开启`基于指定逻辑的hook`
      "hook_target_supported_types": [
        "url",
        "regex",
