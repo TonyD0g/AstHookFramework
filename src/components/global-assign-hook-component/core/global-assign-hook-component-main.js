@@ -2,7 +2,7 @@ const fs = require("fs");
 const shell = require("shelljs");
 const crypto = require("crypto");
 const cheerio = require("cheerio");
-const {minify} = require("terser");
+const {minify, minify_sync} = require("terser");
 
 const {loadConfig} = require("../../../utils/loadConfig.js");
 const {loadPluginsAsStringWithCache} = require("./plugins-manager");
@@ -68,13 +68,29 @@ function process(requestDetail, responseDetail) {
         return;
     }
 
+    let fileName = requestDetail.url.substring(requestDetail.url.lastIndexOf('/') + 1);
+
+    // 引入一个黑名单,对"无意义"的js文件进行跳过,防止hook这些库代码让页面直接崩溃(能在config文件中进行配置)
+    let isSuccessMatch = false;
+    let hookTargetType = "";
+    let hookTargetValue = "";
+    for (const current_skip_js of config.skip_js_list) {
+        if (current_skip_js.type === "str" && current_skip_js.value === fileName) {
+            isSuccessMatch = true
+        } else if (current_skip_js.type === "regex" && matchByRegExp(current_skip_js.value, fileName)) {
+            isSuccessMatch = true
+        }
+        if (isSuccessMatch) break
+    }
+    if (isSuccessMatch) return;
+
     if (!isJavaScriptResponse(responseDetail)) return;
 
     if (config.is_open_hook_target) {
         // 支持选择性对特定URL/符合正则的URL进行AST Hook
-        let isSuccessMatch = false;
-        let hookTargetType = "";
-        let hookTargetValue = "";
+        isSuccessMatch = false;
+        hookTargetType = "";
+        hookTargetValue = "";
         for (const current_hook_target of config.hook_target) {
             if (current_hook_target.type === "url" && current_hook_target.value === requestDetail.url) {
                 isSuccessMatch = true
@@ -99,7 +115,8 @@ function process(requestDetail, responseDetail) {
         const hours = String(date.getHours()).padStart(2, '0');
         const minutes = String(date.getMinutes()).padStart(2, '0');
 
-        console.log(`[+] ${year}-${month}-${day}-${hours}:${minutes} 开始对类型为: ${hookTargetType} , 值为: ${hookTargetValue} 的数据开始Hook`);
+        // 丰富日志: 告知用户对实际哪一个js文件进行hook
+        console.log(`[+] ${year}-${month}-${day}-${hours}:${minutes} 开始对类型为: ${hookTargetType}, 值为: ${hookTargetValue}, 目标为: ${fileName} 的数据开始Hook`);
     }
 
     try {
@@ -177,7 +194,7 @@ function processHtmlResponse(requestDetail, responseDetail) {
         let newJsCode = positioningEncryptionHook(jsCode);
         // 随着script替换时注入，不创建新的script标签
         if (!alreadyInjectHookContext) {
-            newJsCode = loadPluginsAsStringWithCache() + newJsCode;
+            newJsCode = newJsCode + loadPluginsAsStringWithCache();
             alreadyInjectHookContext = true;
         }
 
@@ -214,11 +231,10 @@ function processJavaScriptResponse(requestDetail, responseDetail) {
     const url = requestDetail.url;
     const body = responseDetail.response.body.toString();
 
-    if (isNeedIgnoreHook(body)) {
-        return;
-    }
+    if (isNeedIgnoreHook(body)) return;
 
-    if (disableCache || body.length <= 2000) {
+
+    if (disableCache) {
         processRealtime(responseDetail, url, body);
     } else if (injectSuccessJsFileCache.has(url)) {
         processFromCache(responseDetail, url, body);
@@ -238,19 +254,25 @@ function processFromCache(responseDetail, url, body) {
 }
 
 function compressCode(newJsCode, cacheFilePath, meta) {
-    return minify(newJsCode, {
-        compress: false,
-        mangle: false
-    })
-        .then(result => {
-            if (result.error) throw result.error;
-
-            if (!disableCache) {
-                fs.writeFileSync(cacheFilePath, result.code);
-                fs.appendFileSync(injectSuccessJsFileCacheMetaFile, JSON.stringify(meta) + "\n");
-            }
-            return result.code;
+    try {
+        // 调用同步压缩方法
+        const result = minify_sync(newJsCode, {
+            compress: false,
+            mangle: false
         });
+
+        if (result.error) {
+            throw result.error;
+        }
+        if (!disableCache) {
+            fs.writeFileSync(cacheFilePath, result.code);
+            fs.appendFileSync(injectSuccessJsFileCacheMetaFile, JSON.stringify(meta) + "\n");
+        }
+
+        return result.code;
+    } catch (error) {
+        console.error('压缩过程中发生错误:', error);
+    }
 }
 
 function processRealtime(responseDetail, url, body) {
@@ -275,7 +297,8 @@ function processRealtime(responseDetail, url, body) {
 
     // 将 newJsCode 进行压缩,防止代码格式化检测
     if (config.is_auto_compress) { // 为True时开启压缩
-        compressCode(newJsCode, cacheFilePath, meta).then(result => responseDetail.response.body = loadPluginsAsStringWithCache() + result);
+        let resultForCompressCode = compressCode(newJsCode, cacheFilePath, meta);
+        responseDetail.response.body = loadPluginsAsStringWithCache() + resultForCompressCode
     } else {
         if (!disableCache) {
             fs.writeFileSync(cacheFilePath, newJsCode);

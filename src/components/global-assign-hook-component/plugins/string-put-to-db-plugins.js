@@ -16,9 +16,7 @@
 
     function stringPutToDB(name, value, type) {
 
-        if (!value) {
-            return;
-        }
+        if (!value) return;
 
         // TODO 更多类型搞进来
         // TODO 为什么一定要大而全呢？虽然占用的内存并不多，但是如果上百万的零碎变量还是会耗时间的？也许应该针对性的做出取舍
@@ -31,10 +29,9 @@
             // valueString = value + "";
         }
 
-        if (!valueString) {
-            return;
-        }
+        if (!valueString) return;
 
+        // todo 优先级最高: 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）
         // 获取代码位置
         const codeLocation = getCodeLocation();
         varValueDb.push({

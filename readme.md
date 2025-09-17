@@ -54,6 +54,17 @@
          "type": "domain", // 指定的类型,允许的类型范围在`hook_target_supported_types`
          "value": "baidu.com" // 对应的值,比如说 baidu.com
        }
+     ],
+     
+     "skip_js_list_supported_types": [ // skip_js_list 支持的类型
+       "str",
+       "regex"
+     ],
+     "skip_js_list": [ // 需要跳过hook的js列表
+       {
+         "type": "str", // 类型,范围在 `skip_js_list_supported_types`
+         "value": "jquery-3.6.0.min.js" // 类型对应的值
+       }
      ]
    }
    ```
@@ -149,6 +160,8 @@ hook.search("加密参数的值")
 ## TODO
 
 - 支持用户自定义加载hook插件 [todo]
+
+- 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出） [todo]
 
 
 

@@ -9,7 +9,7 @@
 
   "is_close_detailedLog": true,
   "is_open_websocket": false,
-  "is_auto_compress": false,
+  "is_auto_compress": true,
   "is_open_hook_target": true,
   "is_regenerate_js": false,
 
@@ -27,7 +27,18 @@
   "hook_target": [
     {
       "type": "domain",
-      "value": "baidu.com"
+      "value": "www.mashangpa.com"
+    }
+  ],
+
+  "skip_js_list_supported_types": [
+    "str",
+    "regex"
+  ],
+  "skip_js_list": [
+    {
+      "type": "str",
+      "value": "jquery-3.6.0.min.js"
     }
   ]
 }

@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const {minify_sync} = require("terser");
 
 // 管理插件加载，打包注入到页面中
 
@@ -19,7 +20,7 @@ function loadPluginsAsStringWithCache() {
         return pluginsJsCodeCache;
     }
     lastReadDiskTs = new Date().getTime();
-    return pluginsJsCodeCache = loadPluginsAsString();
+    return loadPluginsAsString();
 }
 
 // 把所有插件加载为 String
@@ -56,7 +57,8 @@ function loadPluginsAsString() {
         pluginsJsContentArray.push(pluginJsContent);
     }
 
-    return "\n// ----------------------------------------- Hook代码开始 ----------------------------------------------------- \n" +
+    // 默认压缩hook代码,防止检测
+    let needCompressJsCode =  "\n// ----------------------------------------- Hook代码开始 ----------------------------------------------------- \n" +
         "\n(() => {\n" +
 
         loadOnce +
@@ -66,9 +68,24 @@ function loadPluginsAsString() {
         pluginsJsContentArray.join("\n\n") +
 
         "})();\n" +
-        "\n// ----------------------------------------- Hook代码结束 ----------------------------------------------------- \n\n\n\n\n";
-}
+        "\n// ----------------------------------------- Hook代码结束 ----------------------------------------------------- \n\n\n\n\n"
 
+    try {
+        // 调用同步压缩方法
+        const result = minify_sync(needCompressJsCode, {
+            compress: false,
+            mangle: false
+        });
+
+        if (result.error) {
+            throw result.error;
+        }
+
+        return result.code;
+    } catch (error) {
+        console.error('压缩过程中发生错误:', error);
+    }
+}
 
 module.exports.loadPluginsAsString = loadPluginsAsString;
 module.exports.loadPluginsAsStringWithCache = loadPluginsAsStringWithCache;
