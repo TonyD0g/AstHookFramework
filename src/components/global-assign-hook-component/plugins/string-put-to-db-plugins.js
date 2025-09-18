@@ -1,9 +1,4 @@
 (() => {
-
-    const initDbMessage = "AST HOOK： 如果本窗口内有多个线程，每个线程栈的数据不会共享，初始化线程栈数据库： \n "
-        + window.location.href;
-    console.log(initDbMessage);
-
     // 用于存储Hook到的所有字符串类型的变量
     const stringsDB = window.cc11001100_hook.stringsDB = window.cc11001100_hook.stringsDB || {
         varValueDb: [],
@@ -14,7 +9,78 @@
     // 从一个比较大的数开始计数，以方便在展示的时候与执行次数做区分，差值过大就不易混淆
     let execOrderCounter = 100000;
 
-    function stringPutToDB(name, value, type) {
+    async function storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation) {
+        try {
+            const response = await fetch('http://localhost:3000/api/store-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name,
+                    value: valueString,
+                    type,
+                    execOrder: execOrderCounter,
+                    codeLocation
+                }),
+            });
+            await response.json();
+        } catch (error) {
+        }
+    }
+
+    async function createIntervalStorage() {
+        let isStoring = false;
+        let timeoutId = null;
+
+        function startIntervalStorage(name, valueString, type, execOrderCounter, codeLocation) {
+            if (isStoring) {
+                console.warn('Storage is already running. Stopping previous task.');
+                stopIntervalStorage();
+            }
+            isStoring = true;
+
+            function executeAndSchedule() {
+                if (!isStoring) return;
+
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+
+                storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation)
+                    .then(() => {
+                        if (isStoring) {
+                            timeoutId = setTimeout(executeAndSchedule, 60000);
+                        }
+                    })
+                    .catch((error) => {
+                        if (isStoring) {
+                            timeoutId = setTimeout(executeAndSchedule, 60000);
+                        }
+                    });
+            }
+
+            timeoutId = setTimeout(executeAndSchedule, 0);
+
+            return new Promise((resolve) => {
+                resolve(stopIntervalStorage);
+            });
+        }
+
+        function stopIntervalStorage() {
+            isStoring = false;
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+                timeoutId = null;
+            }
+        }
+
+        // 注意这里：返回 startIntervalStorage 函数本身，而不是一个 Promise
+        return startIntervalStorage;
+    }
+
+    async function stringPutToDB(name, value, type) {
 
         if (!value) return;
 
@@ -31,9 +97,10 @@
 
         if (!valueString) return;
 
-        // todo 优先级最高: 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）
+        // 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）
         // 获取代码位置
         const codeLocation = getCodeLocation();
+        execOrderCounter = execOrderCounter++
         varValueDb.push({
             name,
             // TODO Buffer类结构直接运算Hook不到的问题仍然没有解决...
@@ -43,8 +110,16 @@
             // 所以干脆在它还是个buffer的时候就转为字符串
             value: valueString,
             type,
-            execOrder: execOrderCounter++,
+            execOrder: execOrderCounter,
             codeLocation
+        });
+        const startMyStorage = createIntervalStorage();
+        (await startMyStorage)(name, valueString, type, execOrderCounter, codeLocation).then((stopStorage) => {
+            // stopStorage 就是返回的停止函数
+            // 你需要停止时调用 stopStorage()
+            // 例如，在某个按钮点击事件或条件满足时：stopStorage();
+            //stopStorage();
+        }).catch((error) => {
         });
 
         // 这个地方被执行的次数统计

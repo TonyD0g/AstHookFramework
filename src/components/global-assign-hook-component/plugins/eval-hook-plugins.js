@@ -9,7 +9,6 @@
 
         if (enableEvalHookLog) {
             const isNeedNewLine = jsCode && jsCode.length > 100;
-            console.log("AST HOOK工具检测到eval执行代码： " + (isNeedNewLine ? "\n" : "") + jsCode);
         }
 
         let newJsCode = jsCode;

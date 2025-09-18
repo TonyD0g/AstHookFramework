@@ -39,6 +39,10 @@
     {
       "type": "str",
       "value": "jquery-3.6.0.min.js"
+    },
+    {
+      "type": "str",
+      "value": "base.js"
     }
   ]
 }
