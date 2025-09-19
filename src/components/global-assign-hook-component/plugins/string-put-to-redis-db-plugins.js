@@ -8,6 +8,7 @@
 
     // 从一个比较大的数开始计数，以方便在展示的时候与执行次数做区分，差值过大就不易混淆
     let execOrderCounter = 100000;
+    const checkMap = new Map();
 
     async function storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation) {
         try {
@@ -63,7 +64,12 @@
             codeLocation
         });
 
-        storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation).then(()=>{})
+        let checkMapKey = name + valueString + type + execOrderCounter + codeLocation;
+        if (!checkMap.has(checkMapKey)) {
+            checkMap.set(checkMapKey, true);
+            storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation).then(() => {
+            })
+        }
 
         // 这个地方被执行的次数统计
         if (codeLocation in codeLocationExecuteTimesCount) {
