@@ -12,7 +12,7 @@
   "is_auto_compress": true,
   "is_open_hook_target": true,
   "is_regenerate_js": false,
-  "is_export_data_in_redis":false,
+  "is_export_data_in_redis":true,
 
   "supported_plugin_list": [
     "positioningEncryptionHook",

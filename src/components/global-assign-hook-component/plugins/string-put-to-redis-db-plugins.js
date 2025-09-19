@@ -29,57 +29,6 @@
         }
     }
 
-    async function createIntervalStorage() {
-        let isStoring = false;
-        let timeoutId = null;
-
-        function startIntervalStorage(name, valueString, type, execOrderCounter, codeLocation) {
-            if (isStoring) {
-                console.warn('Storage is already running. Stopping previous task.');
-                stopIntervalStorage();
-            }
-            isStoring = true;
-
-            function executeAndSchedule() {
-                if (!isStoring) return;
-
-                if (timeoutId) {
-                    clearTimeout(timeoutId);
-                    timeoutId = null;
-                }
-
-                storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation)
-                    .then(() => {
-                        if (isStoring) {
-                            timeoutId = setTimeout(executeAndSchedule, 60000);
-                        }
-                    })
-                    .catch((error) => {
-                        if (isStoring) {
-                            timeoutId = setTimeout(executeAndSchedule, 60000);
-                        }
-                    });
-            }
-
-            timeoutId = setTimeout(executeAndSchedule, 0);
-
-            return new Promise((resolve) => {
-                resolve(stopIntervalStorage);
-            });
-        }
-
-        function stopIntervalStorage() {
-            isStoring = false;
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-            }
-        }
-
-        // 注意这里：返回 startIntervalStorage 函数本身，而不是一个 Promise
-        return startIntervalStorage;
-    }
-
     async function stringPutToDB(name, value, type) {
 
         if (!value) return;
@@ -113,14 +62,8 @@
             execOrder: execOrderCounter,
             codeLocation
         });
-        const startMyStorage = createIntervalStorage();
-        (await startMyStorage)(name, valueString, type, execOrderCounter, codeLocation).then((stopStorage) => {
-            window.addEventListener('beforeunload', (event) => {
-                stopStorage(); // 需要停止时调用 stopStorage()
-                event.returnValue = ''; // 支持一些旧版本浏览器，但又不想弹出提示，所以明确设置 returnValue 为空字符串或 undefined
-            });
-        }).catch((error) => {
-        });
+
+        storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation).then(()=>{})
 
         // 这个地方被执行的次数统计
         if (codeLocation in codeLocationExecuteTimesCount) {
