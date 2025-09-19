@@ -115,10 +115,10 @@
         });
         const startMyStorage = createIntervalStorage();
         (await startMyStorage)(name, valueString, type, execOrderCounter, codeLocation).then((stopStorage) => {
-            // stopStorage 就是返回的停止函数
-            // 你需要停止时调用 stopStorage()
-            // 例如，在某个按钮点击事件或条件满足时：stopStorage();
-            //stopStorage();
+            window.addEventListener('beforeunload', (event) => {
+                stopStorage(); // 需要停止时调用 stopStorage()
+                event.returnValue = ''; // 支持一些旧版本浏览器，但又不想弹出提示，所以明确设置 returnValue 为空字符串或 undefined
+            });
         }).catch((error) => {
         });
 

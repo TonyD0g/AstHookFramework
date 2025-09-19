@@ -8,7 +8,7 @@ const {loadConfig} = require("../../../utils/loadConfig.js");
 const {loadPluginsAsStringWithCache} = require("./plugins-manager");
 const {positioningEncryptionHook} = require("./inject-hook");
 // const AnyProxy = require("anyproxy");
-const {registerFunctionsToWindow} = require("../plugins/register-function-in-window");
+const {registerFunctionsInWindow} = require("../plugins/register-function-in-window");
 
 // 注入Hook成功的文件暂存到哪个目录下，因为注入实在是太慢了，落盘以应对频繁重启
 const injectSuccessJsFileCacheDirectory = "./js-file-cache";
@@ -279,8 +279,8 @@ function processRealtime(responseDetail, url, body) {
     let newJsCode;
     if (config.current_use_plugin === "positioningEncryptionHook") {
         newJsCode = positioningEncryptionHook(body);
-    } else if (config.current_use_plugin === "registerFunctionsToWindow") {
-        newJsCode = registerFunctionsToWindow(body);
+    } else if (config.current_use_plugin === "registerFunctionsInWindow") {
+        newJsCode = registerFunctionsInWindow(body);
     } else {
         console.log(`[-] 插件名 ${config.current_use_plugin} 不存在,将默认使用 positioningEncryptionHook 插件`);
         newJsCode = positioningEncryptionHook(body);

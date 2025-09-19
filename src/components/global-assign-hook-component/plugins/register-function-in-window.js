@@ -7,7 +7,7 @@ const t = require('@babel/types');
  * @param {string} code - JavaScript代码字符串
  * @returns {string} 修改后的JavaScript代码字符串
  */
-function registerFunctionsToWindow(code) {
+function registerFunctionsInWindow(code) {
     // 生成随机字符串的方法，来自B代码的优点
     function randomString(len = 6) {
         return Math.random().toString(36).substring(2, 2 + len);
@@ -183,4 +183,4 @@ function registerFunctionsToWindow(code) {
     }
 }
 
-module.exports = { registerFunctionsToWindow };
+module.exports = { registerFunctionsInWindow };

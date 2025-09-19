@@ -1,11 +1,20 @@
 const fs = require("fs");
 const path = require("path");
 const {minify_sync} = require("terser");
+const {loadConfig} = require("../../../utils/loadConfig");
 
 // 管理插件加载，打包注入到页面中
 
+let config;
+(async function loadConfigAndInitAgent() {
+    try {
+        config = await loadConfig();
+    } catch (error) {
+        console.error('Failed to load config:', error);
+    }
+})();
+
 const pluginsNames = [
-    "string-put-to-db-plugins.js",
     "search-strings-db-plugins.js",
     "eval-hook-plugins.js",
 ];
@@ -51,6 +60,13 @@ function loadPluginsAsString() {
 
     const pluginsJsContentArray = [];
     const pluginsBaseDirectory = path.join(__dirname, '../../src/components/global-assign-hook-component/plugins/');
+
+    if (config.is_export_data_in_redis){
+        pluginsNames.unshift("string-put-to-redis-db-plugins.js");
+    }else {
+        pluginsNames.unshift("string-put-in-var-db-plugins.js");
+    }
+
     for (let pluginName of pluginsNames) {
         const pluginFilePath = pluginsBaseDirectory + "/" + pluginName;
         const pluginJsContent = fs.readFileSync(pluginFilePath).toString();
@@ -58,7 +74,7 @@ function loadPluginsAsString() {
     }
 
     // 默认压缩hook代码,防止检测
-    let needCompressJsCode =  "\n// ----------------------------------------- Hook代码开始 ----------------------------------------------------- \n" +
+    let needCompressJsCode = "\n// ----------------------------------------- Hook代码开始 ----------------------------------------------------- \n" +
         "\n(() => {\n" +
 
         loadOnce +

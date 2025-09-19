@@ -264,7 +264,7 @@ Tips：在开发插件的过程中无需频繁重启代理服务器，在配置�
 读取硬盘上的插件代码缓存有3秒， 超过3秒会从硬盘再读取一次，这是为了方便调试。
 
 目前已经内置的插件：
-- string-put-to-db-plugins.js：是为了能够将抓到的字符串类型的变量放到内存数据库
+- string-put-to-redis-db-plugins.js：是为了能够将抓到的字符串类型的变量放到内存数据库
 - search-strings-db-plugins.js： 提供搜索变量数据库的能力
 - eval-hook-plugins.js：是为了能够Hook使用eval执行的代码  
 

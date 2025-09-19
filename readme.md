@@ -36,6 +36,7 @@
      "is_close_detailedLog": true, // 是否关闭详细日志
      "is_open_websocket": false, // 是否开启 websocket
      "is_auto_compress": true, // 是否自动压缩hook后的js代码
+     "is_export_data_in_redis":false, // 是否导出数据到redis,用于对抗无法使用控制台的情况，如为True,则需要事先本地开启redis且cd /src/proxy-server ，并 node redis-backend.js
      
      "supported_plugin_list": [ // 支持的插件
        "positioningEncryptionHook", // 定位加密
@@ -155,7 +156,7 @@ hook.search("加密参数的值")
 
 - 使用anyproxy将请求发送到另一个http代理，且可通过Config文件进行配置   [√]
 
-- 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）   [√]
+- 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到redis，将过程中的所有内容输出到终端）   [√]
 
   
 

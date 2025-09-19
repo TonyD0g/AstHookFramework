@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const {positioningEncryptionHook} = require("../components/global-assign-hook-component/core/inject-hook");
-const {registerFunctionsToWindow} = require("../components/global-assign-hook-component/plugins/register-function-in-window");
+const {registerFunctionsInWindow} = require("../components/global-assign-hook-component/plugins/register-function-in-window");
 const {promises: fs} = require("fs");
 
 
@@ -44,8 +44,8 @@ app.post("/hook-js-code", function (request, response) {
     try {
         if (config.current_use_plugin === "positioningEncryptionHook") {
             newJsCode = positioningEncryptionHook(body);
-        } else if (config.current_use_plugin === "registerFunctionsToWindow") {
-            newJsCode = registerFunctionsToWindow(body);
+        } else if (config.current_use_plugin === "registerFunctionsInWindow") {
+            newJsCode = registerFunctionsInWindow(body);
         } else {
             console.log(`[-] 插件名 ${config.current_use_plugin} 不存在,将默认使用 positioningEncryptionHook 插件`);
             newJsCode = positioningEncryptionHook(body);
