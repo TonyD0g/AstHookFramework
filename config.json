@@ -9,7 +9,7 @@
 
   "is_close_detailedLog": true,
   "is_open_websocket": false,
-  "is_auto_compress": true,
+  "is_auto_compress": false,
   "is_open_hook_target": true,
   "is_regenerate_js": false,
   "is_export_data_in_redis":true,
@@ -44,6 +44,10 @@
     {
       "type": "str",
       "value": "base.js"
+    },
+    {
+      "type": "regex",
+      "value": "jquery.(.*?).js"
     }
   ]
 }

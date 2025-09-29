@@ -30,42 +30,47 @@
         }
     }
 
-    async function stringPutToDB(name, value, type) {
+    function advancedToString(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        if (Array.isArray(value)) {
+            return value.join(','); // 自定义数组格式
+        }
+        if (typeof value === 'object') {
+            return JSON.stringify(value); // 对象转为JSON
+        }
+        return String(value);
+    }
 
+
+    async function stringPutToDB(name, value, type) {
         if (!value) return;
 
-        // TODO 更多类型搞进来
         // TODO 为什么一定要大而全呢？虽然占用的内存并不多，但是如果上百万的零碎变量还是会耗时间的？也许应该针对性的做出取舍
-        let valueString = "";
-        let valueTypeof = typeof value;
-        if (valueTypeof === "string") {
-            valueString = value;
-        } else if (valueTypeof === "number") {
-            // 太慢了...
-            // valueString = value + "";
-        }
 
-        if (!valueString) return;
+        let valueString;
+        valueString = advancedToString(value);
+        if (Object.keys(valueString).length === 0 || valueString === "{}") return;
 
         // 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）
         // 获取代码位置
         const codeLocation = getCodeLocation();
         execOrderCounter = execOrderCounter++
-        varValueDb.push({
-            name,
-            // TODO Buffer类结构直接运算Hook不到的问题仍然没有解决...
-            // 默认情况下把所有变量都toString保存到字符串池子中
-            // 有一些参数就是放在Buffer或者什么地方以字节形式存储，当使用到的时候直接与字符串相加toString，
-            // 这种情况如果只监控变量赋值就监控不到了，这是不想添加更多监控点的情况下的折中方案...
-            // 所以干脆在它还是个buffer的时候就转为字符串
-            value: valueString,
-            type,
-            execOrder: execOrderCounter,
-            codeLocation
-        });
-
-        let checkMapKey = name + valueString + type + execOrderCounter + codeLocation;
+        let checkMapKey = name + valueString + type + codeLocation;
         if (!checkMap.has(checkMapKey)) {
+            varValueDb.push({
+                name,
+                // TODO Buffer类结构直接运算Hook不到的问题仍然没有解决...
+                // 默认情况下把所有变量都toString保存到字符串池子中
+                // 有一些参数就是放在Buffer或者什么地方以字节形式存储，当使用到的时候直接与字符串相加toString，
+                // 这种情况如果只监控变量赋值就监控不到了，这是不想添加更多监控点的情况下的折中方案...
+                // 所以干脆在它还是个buffer的时候就转为字符串
+                value: valueString,
+                type,
+                execOrder: execOrderCounter,
+                codeLocation
+            });
             checkMap.set(checkMapKey, true);
             storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation).then(() => {
             })

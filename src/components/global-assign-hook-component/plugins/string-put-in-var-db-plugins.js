@@ -9,20 +9,25 @@
     // 从一个比较大的数开始计数，以方便在展示的时候与执行次数做区分，差值过大就不易混淆
     let execOrderCounter = 100000;
 
+    function advancedToString(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        if (Array.isArray(value)) {
+            return value.join(','); // 自定义数组格式
+        }
+        if (typeof value === 'object') {
+            return JSON.stringify(value); // 对象转为JSON
+        }
+        return String(value);
+    }
+
     async function stringPutToDB(name, value, type) {
 
         if (!value) return;
 
-        let valueString = "";
-        let valueTypeof = typeof value;
-        if (valueTypeof === "string") {
-            valueString = value;
-        } else if (valueTypeof === "number") {
-            // 太慢了...
-            // valueString = value + "";
-        }
-
-        if (!valueString) return;
+        let valueString = advancedToString(value);
+        if (Object.keys(valueString).length === 0 || valueString === "{}") return;
 
         // 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）
         // 获取代码位置

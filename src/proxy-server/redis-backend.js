@@ -25,6 +25,8 @@ redisClient.connect().then(() => {
         console.error('Failed to connect to Redis or flush database:', err);
     });
 
+const checkMap = new Map();
+
 function setupRoutesAndStartServer() {
     // 设置一个路由，让前端通过此 API 存储数据到 Redis
     app.post('/api/store-data', async (req, res) => {
@@ -37,9 +39,15 @@ function setupRoutesAndStartServer() {
                 execOrder: execOrderCounter,
                 codeLocation
             };
+
             const redisValue = JSON.stringify(dataToStore); // 序列化为JSON字符串
+            let checkMapKey = name + value + type + codeLocation;
+            // 如果发现重复数据，发送响应后立即 return
+            if (checkMap.has(checkMapKey)) return res.json({message: `Duplicate data has been automatically removed: ${name}`});
+
+            checkMap.set(checkMapKey, true);
             await redisClient.set(name, redisValue);
-            console.log(`${redisValue}`);
+            console.log(`${redisValue}` + "\n");
             res.json({message: `Data stored with key: ${name}`});
         } catch (err) {
             res.status(500).json({error: 'Failed to store data in Redis'});

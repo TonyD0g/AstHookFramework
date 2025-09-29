@@ -23,7 +23,9 @@
 
    
 
-3. 配置 config 文件 (目录下的 config.json)
+3. 配置 config 文件 (目录下的 config.json) 
+
+   **注意：每次更改config文件后，需要重启下proxy-server.js**
 
    ```json
    {
