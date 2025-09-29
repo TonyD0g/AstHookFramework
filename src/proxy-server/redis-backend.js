@@ -73,6 +73,7 @@ function setupRoutesAndStartServer() {
                     results.stored++;
                 } catch (err) {
                     console.error(`Failed to store key: ${name}`, err);
+                    checkMap.set(checkMapKey, true);
                     results.errors++;
                 }
             }

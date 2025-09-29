@@ -39,16 +39,16 @@
             return value.join(','); // 自定义数组格式
         }
         if (typeof value === 'object') {
-            try{
+            try {
                 return JSON.stringify(value); // 对象转为JSON
-            }catch (error){
+            } catch (error) {
                 return "";
             }
         }
 
         return String(value);
     }
-
+    
     const dataQueue = [];
     let isProcessing = false;
     const BATCH_SIZE = 20; // 每批处理的数据量
@@ -62,7 +62,7 @@
         try {
             const response = await fetch('http://localhost:3000/api/store-data-batch', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(batch), // 发送数组格式的批量数据
             });
             await response.json();
@@ -84,27 +84,15 @@
         valueString = advancedToString(value);
         if (Object.keys(valueString).length === 0 || valueString === "{}") return;
 
-        // 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）
+        // 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到数据库，可以尽量将所有内容输出）
         // 获取代码位置
         const codeLocation = getCodeLocation();
         execOrderCounter = execOrderCounter++
         let checkMapKey = name + valueString + type + codeLocation;
         if (!checkMap.has(checkMapKey)) {
-            varValueDb.push({
-                name,
-                // TODO Buffer类结构直接运算Hook不到的问题仍然没有解决...
-                // 默认情况下把所有变量都toString保存到字符串池子中
-                // 有一些参数就是放在Buffer或者什么地方以字节形式存储，当使用到的时候直接与字符串相加toString，
-                // 这种情况如果只监控变量赋值就监控不到了，这是不想添加更多监控点的情况下的折中方案...
-                // 所以干脆在它还是个buffer的时候就转为字符串
-                value: valueString,
-                type,
-                execOrder: execOrderCounter,
-                codeLocation
-            });
             checkMap.set(checkMapKey, true);
-            dataQueue.push({ name, value: valueString, type, execOrder: execOrderCounter, codeLocation });
-            if (!isProcessing) {
+            dataQueue.push({name, value: valueString, type, execOrder: execOrderCounter, codeLocation});
+            if (dataQueue.length > BATCH_SIZE && !isProcessing) {
                 setTimeout(sendBatchData, PROCESS_DELAY);
             }
         }
