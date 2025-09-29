@@ -10,6 +10,7 @@
     let execOrderCounter = 100000;
     const checkMap = new Map();
 
+
     async function storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation) {
         try {
             const response = await fetch('http://localhost:3000/api/store-data', {
@@ -38,16 +39,46 @@
             return value.join(','); // 自定义数组格式
         }
         if (typeof value === 'object') {
-            return JSON.stringify(value); // 对象转为JSON
+            try{
+                return JSON.stringify(value); // 对象转为JSON
+            }catch (error){
+                return "";
+            }
         }
+
         return String(value);
     }
 
+    const dataQueue = [];
+    let isProcessing = false;
+    const BATCH_SIZE = 20; // 每批处理的数据量
+    const PROCESS_DELAY = 1000; // 延迟处理时间（毫秒）
+    async function sendBatchData() {
+        if (dataQueue.length === 0 || isProcessing) return;
+
+        isProcessing = true;
+        const batch = dataQueue.splice(0, BATCH_SIZE); // 取出一批数据
+
+        try {
+            const response = await fetch('http://localhost:3000/api/store-data-batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(batch), // 发送数组格式的批量数据
+            });
+            await response.json();
+        } catch (error) {
+            // 3. 失败时重新放回队列（确保数据不丢失）
+            dataQueue.unshift(...batch);
+        } finally {
+            isProcessing = false;
+            if (dataQueue.length > 0) {
+                setTimeout(sendBatchData, PROCESS_DELAY); // 继续处理下一批
+            }
+        }
+    }
 
     async function stringPutToDB(name, value, type) {
         if (!value) return;
-
-        // TODO 为什么一定要大而全呢？虽然占用的内存并不多，但是如果上百万的零碎变量还是会耗时间的？也许应该针对性的做出取舍
 
         let valueString;
         valueString = advancedToString(value);
@@ -72,8 +103,10 @@
                 codeLocation
             });
             checkMap.set(checkMapKey, true);
-            storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation).then(() => {
-            })
+            dataQueue.push({ name, value: valueString, type, execOrder: execOrderCounter, codeLocation });
+            if (!isProcessing) {
+                setTimeout(sendBatchData, PROCESS_DELAY);
+            }
         }
 
         // 这个地方被执行的次数统计

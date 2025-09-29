@@ -28,6 +28,66 @@ redisClient.connect().then(() => {
 const checkMap = new Map();
 
 function setupRoutesAndStartServer() {
+    app.post('/api/store-data-batch', async (req, res) => {
+        try {
+            const dataArray = req.body;
+
+            if (!Array.isArray(dataArray)) {
+                return res.status(400).json({error: 'Request body must be an array'});
+            }
+
+            const results = {
+                stored: 0,
+                errors: 0
+            };
+
+            for (const item of dataArray) {
+                const { name, value, type, execOrderCounter, codeLocation } = item;
+
+                // 加强数据验证
+                if (!name || value === undefined || typeof name !== 'string') {
+                    results.errors++;
+                    continue;
+                }
+
+                const dataToStore = {
+                    name,
+                    value,
+                    type,
+                    execOrder: execOrderCounter,
+                    codeLocation
+                };
+
+                // 强制转换为字符串
+                const redisValue = String(JSON.stringify(dataToStore));
+                let checkMapKey = name + value + type + codeLocation;
+
+                if (checkMap.has(checkMapKey)) continue;
+
+                console.log(`${redisValue}` + "\n");
+
+                try {
+                    // 使用 set 命令并明确指定类型
+                    await redisClient.set(name, redisValue);
+                    checkMap.set(checkMapKey, true);
+                    results.stored++;
+                } catch (err) {
+                    console.error(`Failed to store key: ${name}`, err);
+                    results.errors++;
+                }
+            }
+
+            res.json({
+                message: `Batch storage completed`,
+                ...results
+            });
+
+        } catch (err) {
+            console.error('Batch storage error:', err);
+            res.status(500).json({error: 'Failed to store batch data in Redis'});
+        }
+    });
+
     // 设置一个路由，让前端通过此 API 存储数据到 Redis
     app.post('/api/store-data', async (req, res) => {
         const {name, value, type, execOrderCounter, codeLocation} = req.body;

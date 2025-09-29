@@ -17,8 +17,13 @@
             return value.join(','); // 自定义数组格式
         }
         if (typeof value === 'object') {
-            return JSON.stringify(value); // 对象转为JSON
+            try{
+                return JSON.stringify(value); // 对象转为JSON
+            }catch (error){
+                return "";
+            }
         }
+
         return String(value);
     }
 
