@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express');
 const redis = require('redis');
 const cors = require('cors');
@@ -26,6 +27,7 @@ redisClient.connect().then(() => {
     });
 
 const checkMap = new Map();
+fs.writeFileSync('./store-data-batch.log', '');
 
 function setupRoutesAndStartServer() {
     app.post('/api/store-data-batch', async (req, res) => {
@@ -59,21 +61,23 @@ function setupRoutesAndStartServer() {
                 };
 
                 // 强制转换为字符串
-                const redisValue = String(JSON.stringify(dataToStore));
+                const redisValue = JSON.stringify(dataToStore); //String(JSON.stringify(dataToStore));
                 let checkMapKey = name + value + type + codeLocation;
 
                 if (checkMap.has(checkMapKey)) continue;
 
-                console.log(`${redisValue}` + "\n");
+                fs.appendFile('./store-data-batch.log', `${redisValue}\n\n`, (err) => {
+                    if (err) {
+                        console.error('写入日志文件失败:', err);
+                    }
+                });
 
                 try {
-                    // 使用 set 命令并明确指定类型
                     await redisClient.set(name, redisValue);
                     checkMap.set(checkMapKey, true);
                     results.stored++;
                 } catch (err) {
                     console.error(`Failed to store key: ${name}`, err);
-                    checkMap.set(checkMapKey, true);
                     results.errors++;
                 }
             }
@@ -133,6 +137,7 @@ function setupRoutesAndStartServer() {
     const PORT = 3000;
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
+        console.log("The content has been written to the file `store-data-batch.log` in this directory. Please check the file directly")
     });
 }
 

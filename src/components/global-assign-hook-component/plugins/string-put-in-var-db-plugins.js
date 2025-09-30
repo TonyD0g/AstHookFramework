@@ -28,14 +28,12 @@
     }
 
     async function stringPutToDB(name, value, type) {
-
         if (!value) return;
 
         let valueString = advancedToString(value);
         if (Object.keys(valueString).length === 0 || valueString === "{}") return;
 
         // 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到一个数据库/文件，将所有内容输出）
-        // 获取代码位置
         const codeLocation = getCodeLocation();
         execOrderCounter = execOrderCounter++
         varValueDb.push({

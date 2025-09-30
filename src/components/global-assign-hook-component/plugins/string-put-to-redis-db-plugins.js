@@ -10,27 +10,7 @@
     let execOrderCounter = 100000;
     const checkMap = new Map();
 
-
-    async function storeDataInRedis(name, valueString, type, execOrderCounter, codeLocation) {
-        try {
-            const response = await fetch('http://localhost:3000/api/store-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name,
-                    value: valueString,
-                    type,
-                    execOrder: execOrderCounter,
-                    codeLocation
-                }),
-            });
-            await response.json();
-        } catch (error) {
-        }
-    }
-
+    // todo 优先级高 应该支持选择变量,否则内容爆炸
     function advancedToString(value) {
         if (value === null || value === undefined) {
             return '';
@@ -48,7 +28,7 @@
 
         return String(value);
     }
-    
+
     const dataQueue = [];
     let isProcessing = false;
     const BATCH_SIZE = 20; // 每批处理的数据量
@@ -67,13 +47,10 @@
             });
             await response.json();
         } catch (error) {
-            // 3. 失败时重新放回队列（确保数据不丢失）
-            dataQueue.unshift(...batch);
+            dataQueue.unshift(...batch);             // 3. 失败时重新放回队列（确保数据不丢失）
         } finally {
             isProcessing = false;
-            if (dataQueue.length > 0) {
-                setTimeout(sendBatchData, PROCESS_DELAY); // 继续处理下一批
-            }
+            setTimeout(sendBatchData, PROCESS_DELAY);
         }
     }
 
@@ -85,7 +62,6 @@
         if (Object.keys(valueString).length === 0 || valueString === "{}") return;
 
         // 解决检测控制台又不知如何绕过时，如何使用hook.search的问题（缓存到数据库，可以尽量将所有内容输出）
-        // 获取代码位置
         const codeLocation = getCodeLocation();
         execOrderCounter = execOrderCounter++
         let checkMapKey = name + valueString + type + codeLocation;

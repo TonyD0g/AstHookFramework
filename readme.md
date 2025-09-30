@@ -165,8 +165,7 @@ hook.search("加密参数的值")
 ## TODO
 
 - 支持用户自定义加载hook插件 [todo]
-
-  
+- config添加一个新参数，用于支持重新生成魔改后的js [todo]
 
 
 
