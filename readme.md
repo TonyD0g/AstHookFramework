@@ -1,6 +1,6 @@
 # AST-Hook-Framework
 
-## 原理
+## 1. 原理
 
 1. 通过 AnyProxy 获取原JS，并通过AST修改之
 
@@ -9,7 +9,7 @@
    
 
 
-## 使用
+## 2. 使用
 
 1. 下载源码
 
@@ -88,9 +88,11 @@
 
    
 
-## 目前支持的插件
+## 3. 目前支持的插件
 
-### 快速定位到**加密参数**的**加密位置**
+### 3.1 快速定位到**加密参数**的**加密位置**
+
+缺陷：捕获数据不全
 
 ##### **简单说：**
 
@@ -135,7 +137,7 @@ hook.search("加密参数的值")
 
 
 
-#### 注册所有方法到window
+#### 3.2 注册所有方法到window
 
 - (**有缺陷,可能会漏方法**)
 - 方便jsRPC调用
@@ -144,7 +146,7 @@ hook.search("加密参数的值")
 
 
 
-## 特性
+## 4. 特性
 
 - [原项目](https://github.com/JSREI/ast-hook-for-js-RE?tab=readme-ov-file) Bug fix [√]
 
@@ -162,14 +164,14 @@ hook.search("加密参数的值")
 
   
 
-## TODO
+## 5. TODO
 
 - 支持用户自定义加载hook插件 [todo]
 - config添加一个新参数，用于支持重新生成魔改后的js [todo]
 
 
 
-## 感谢
+## 6. 感谢
 
 - 原项目：https://github.com/JSREI/ast-hook-for-js-RE?tab=readme-ov-file
 - 魔改一：https://github.com/lgnorant-lu/AST-Hook-for-JS-RE-Personnal-Use

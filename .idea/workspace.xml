@@ -27,8 +27,10 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
-    &quot;Node.js.api-server.js.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.api-server.js.executor&quot;: &quot;Debug&quot;,
     &quot;Node.js.proxy-server.js.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.redis-backend.js.executor&quot;: &quot;Run&quot;,
+    &quot;Node.js.string-put-to-db-plugins.js.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/Users/macmini/Coding/Github/AstHookFramework&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -38,15 +40,24 @@
     &quot;ts.external.directory.path&quot;: &quot;/Applications/WebStorm.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;
   }
 }</component>
-  <component name="RunManager" selected="Node.js.proxy-server.js">
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/proxy-server" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Node.js.redis-backend.js">
     <configuration name="api-server.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/api-server/api-server.js" working-dir="$PROJECT_DIR$/src/api-server">
       <method v="2" />
     </configuration>
     <configuration name="proxy-server.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/proxy-server/proxy-server.js" working-dir="$PROJECT_DIR$/src/proxy-server">
       <method v="2" />
     </configuration>
+    <configuration name="redis-backend.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src/proxy-server/redis-backend.js" working-dir="$PROJECT_DIR$/src/components/global-assign-hook-component/core">
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Node.js.redis-backend.js" />
         <item itemvalue="Node.js.proxy-server.js" />
         <item itemvalue="Node.js.api-server.js" />
       </list>
@@ -60,15 +71,6 @@
     <option featureType="com.intellij.fileTypeFactory" implementationName="*.md" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/proxy-server/rules.js</url>
-          <line>19</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <watches-manager>
       <configuration name="NodeJSConfigurationType">
         <watch expression="current_hook_target.value" language="JavaScript" />
